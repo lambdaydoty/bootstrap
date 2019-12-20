@@ -1,0 +1,16 @@
+#!/bin/sh
+
+device_id=sdb
+mount_path=/var/lib/mongodb
+
+lsblk
+sudo mkfs.ext4 -T news /dev/$device_id
+sudo mkdir -p $mount_path
+sudo mount -o discard,defaults /dev/$device_id $mount_path
+
+sudo chmod 755 $mount_path
+sudo chown 999 $mount_path
+
+# fstab...
+blkid | grep $device_id
+lsblk

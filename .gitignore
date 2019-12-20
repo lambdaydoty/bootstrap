@@ -1,0 +1,4 @@
+*.swp
+id_rsa*
+ssh_*
+keyfile

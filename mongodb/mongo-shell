@@ -1,0 +1,23 @@
+#!/bin/sh
+
+if [ $# -ne 4  ]; then
+  echo usage: $0 ip0 ip1 ip2 username
+  exit 1
+fi
+
+ip0=$1
+ip1=$2
+ip2=$3
+user_name=$4
+
+IMAGE=mongo:4-bionic
+RS_NAME=rs
+
+docker run \
+  --add-host db0:$ip0 \
+  --add-host db1:$ip1 \
+  --add-host db2:$ip2 \
+  -it \
+  --rm \
+  $IMAGE \
+  /bin/bash -c "mkdir /home/mongodb && touch /home/mongodb/.dbshell && mongo --username $user_name --host $RS_NAME/db0,db1,db2 $user_name --password"

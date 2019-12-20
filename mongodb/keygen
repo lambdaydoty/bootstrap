@@ -1,0 +1,5 @@
+#!/bin/sh
+
+KEYFILE=keyfile
+
+openssl rand -base64 755 > $KEYFILE && cat $KEYFILE

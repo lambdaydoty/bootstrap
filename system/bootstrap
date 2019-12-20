@@ -1,0 +1,51 @@
+#!/bin/sh
+
+DEBIAN_FRONTEND=noninteractive
+AGU='sudo apt-get update'
+AGI='sudo apt-get install --no-install-recommends --yes'
+
+debian_release=buster # <--
+docker_executor=$USER # <--
+
+# docker
+$AGU \
+  && $AGI ca-certificates wget git \
+  && $AGI \
+    apt-transport-https \
+    fail2ban \
+    libterm-readline-perl-perl \
+    make \
+    python3-pip \
+    python3-wheel \
+    unattended-upgrades
+
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+
+echo \
+  "deb [arch=amd64] https://download.docker.com/linux/debian $debian_release stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list
+
+$AGU && $AGI docker-ce
+
+sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+
+# rotate docker logs
+cat <<EOL | sudo tee /etc/logrotate.d/docker-logs
+/var/lib/docker/containers/*/*.log {
+  rotate 7
+  daily
+  compress
+  missingok
+  delaycompress
+  copytruncate
+}
+EOL
+
+# add admin to docker group
+sudo usermod --append --groups docker $docker_executor
+
+# gcloud docker registry
+gcloud auth configure-docker --quiet
+
+# logout/login
+#docker run hello-world

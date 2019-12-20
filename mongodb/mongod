@@ -1,0 +1,25 @@
+#!/bin/sh
+
+KEYFILE=keyfile
+
+IMAGE=mongo:4-bionic
+NAME=mongo
+PORT=27017
+
+DB_DIR=/var/lib/mongodb
+RS_NAME=rs
+
+docker stop $NAME
+docker rm $NAME
+docker run \
+  --restart unless-stopped \
+  --detach \
+  --name $NAME \
+  --publish 0.0.0.0:$PORT:$PORT \
+  --volume "`pwd`/$KEYFILE:/data/$KEYFILE" \
+  --volume "$DB_DIR:/data/db" \
+  $IMAGE \
+    --auth \
+    --replSet $RS_NAME \
+    --keyFile "/data/$KEYFILE"
+docker ps
