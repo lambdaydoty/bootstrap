@@ -12,4 +12,4 @@ private_instance=$3
 ssh \
   -i $identity_file \
   $private_instance \
-  -o "ProxyCommand ssh -W %h:%p -i $identity_file 35.221.143.205"
+  -o "ProxyCommand ssh -W %h:%p -i $identity_file $bastion_host"
