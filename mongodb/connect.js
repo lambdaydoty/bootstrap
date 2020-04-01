@@ -6,9 +6,9 @@ require('dotenv').config()
 const { DB_USERNAME, DB_PASSWORD } = process.env
 
 // Connection URL
-const ip0='10.140.0.7'
-const ip1='10.140.0.8'
-const ip2='10.140.0.9'
+const ip0=''
+const ip1=''
+const ip2=''
 const rs='rs'
 const url = `mongodb://` +
 	`${DB_USERNAME}:${DB_PASSWORD}@` +
