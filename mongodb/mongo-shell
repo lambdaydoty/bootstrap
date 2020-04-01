@@ -13,11 +13,21 @@ user_name=$4
 IMAGE=mongo:4-bionic
 RS_NAME=rs
 
+mute_dir=/home/mongodb
+
 docker run \
+  -it \
+  --rm \
   --add-host db0:$ip0 \
   --add-host db1:$ip1 \
   --add-host db2:$ip2 \
-  -it \
-  --rm \
   $IMAGE \
-  /bin/bash -c "mkdir /home/mongodb && touch /home/mongodb/.dbshell && mongo --username $user_name --host $RS_NAME/db0,db1,db2 $user_name --password"
+  /bin/bash -c "mkdir /home/mongodb && touch /home/mongodb/.dbshell && mongo --username $user_name --host $RS_NAME/db0,db1,db2 --password"
+  # /bin/bash -c @- <<- EOF
+  #   mkdir $mute_dir && touch $mute_dir/.dbshell && \
+  #     mongo \
+  #       --host $RS_NAME/db0,db1,db2 \
+  #       --username $user_name \
+  #       --password
+  # EOF
+

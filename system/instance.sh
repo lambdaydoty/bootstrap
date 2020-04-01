@@ -11,8 +11,8 @@ ip=$3
 
 machine_type=e2-standard-2
 
-network=
-subnet=
+network=wallet-nat-vpc
+subnet=wallet-nat-vpc-subnet-0
 
 boot_disk_size=10GB
 
@@ -25,8 +25,7 @@ gcloud compute instances create $instance_name \
   --boot-disk-size $boot_disk_size \
   --image debian-10-buster-$debian \
   --image-project debian-cloud \
-  --no-address \
   --network=$network \
   --subnet=$subnet \
+  --no-address \
   --private-network-ip=$ip
-

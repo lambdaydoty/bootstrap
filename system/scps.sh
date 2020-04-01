@@ -17,6 +17,5 @@ cp2instance () {
 # cp2instance ./id_rsa.github.pub ~/.ssh/
 cp2instance ./bootstrap ~
 cp2instance ./mkfs_mount_fstab ~
-cp2instance ./mongosh ~
 
 echo "[ssh] gcloud compute ssh $instance_name --zone $zone --tunnel-through-iap"

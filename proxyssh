@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ $# -ne 3  ]; then
+  echo usage: $0 identity_file bastion_host private_instance
+  exit 1
+fi
+
+identity_file=$1
+bastion_host=$2
+private_instance=$3
+
+ssh \
+  -i $identity_file \
+  $private_instance \
+  -o "ProxyCommand ssh -W %h:%p -i $identity_file 35.221.143.205"

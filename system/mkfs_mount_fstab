@@ -1,7 +1,12 @@
 #!/bin/sh
 
-device_id=sdb
-mount_path=/var/lib/mongodb
+if [ $# -ne 2  ]; then
+  echo usage: $0 device_id mount_path
+  exit 1
+fi
+
+device_id=$1 # sdb
+mount_path=$2 # /var/lib/mongodb /data/btc
 
 lsblk
 sudo mkfs.ext4 -T news /dev/$device_id
