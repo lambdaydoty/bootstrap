@@ -1,0 +1,2 @@
+openssl aes-256-cbc -salt -pbkdf2 -in keyfile -out keyfile.aes     # encrypt
+openssl aes-256-cbc -d -salt -pbkdf2 -in keyfile.aes -out keyfile  # decrypt

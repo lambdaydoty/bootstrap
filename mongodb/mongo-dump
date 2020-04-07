@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "mongodb://<>..."
+
+read -sp '--uri=' URI
+IMAGE=mongo:4
+DUMP_DIR=dump
+ID=999
+
+mkdir $DUMP_DIR || true
+sudo chown $ID $DUMP_DIR
+sudo chgrp $ID $DUMP_DIR
+
+docker run \
+  --network host \
+  --volume "`pwd`/$DUMP_DIR:/$DUMP_DIR" \
+  $IMAGE \
+    mongodump --uri=$URI
+
+ls -al $DUMP_DIR
+
+tar -cvf "$DUMP_DIR.tar" $DUMP_DIR
