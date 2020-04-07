@@ -12,15 +12,15 @@ ID=999
 test:
 	@echo $(shell pwd)/123
 
-keygen:
+keygen: keyinexist
 	@openssl rand -base64 755 > $(KEYFILE)
 	@chmod 400 $(KEYFILE)
+	@ls -al $(KEYFILE)
+
+keychown: keyexist
 	@sudo chown $(ID) $(KEYFILE)
 	@sudo chgrp $(ID) $(KEYFILE)
 	@ls -al $(KEYFILE)
-
-keyexist:
-	[ -f $(KEYFILE) ]
 
 run: stop keyexist
 	docker pull $(IMAGE)
@@ -46,6 +46,13 @@ log:
 admin:
 	docker exec -it $(NAME) mongo --host localhost
 
+# helpers #
+
+keyexist:
+	[ -f $(KEYFILE) ]
+
+keyinexist:
+	! [ -f $(KEYFILE) ]
 #ping:
 #	@curl \
 #		--silent \
