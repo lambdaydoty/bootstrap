@@ -9,8 +9,12 @@ RS_NAME=rs
 KEYFILE=keyfile
 ID=999
 
+IP0=
+IP1=
+IP2=
+
 test:
-	@echo $(shell pwd)/123
+	@echo '$(rs_init)'
 
 keygen: keyinexist
 	@openssl rand -base64 755 > $(KEYFILE)
@@ -32,10 +36,13 @@ run: stop keyexist
 		--publish $(PORT):$(PORT) \
 		--volume $(shell pwd)/$(KEYFILE):/data/$(KEYFILE) \
 		--volume $(HOST_DATADIR):$(GUEST_DATADIR) \
+		--add-host db0:$(IP0) \
+		--add-host db1:$(IP1) \
+		--add-host db2:$(IP2) \
 		$(IMAGE) \
-    			--auth \
-    			--replSet $(RS_NAME) \
-    			--keyFile "/data/$(KEYFILE)"
+			--auth \
+			--replSet $(RS_NAME) \
+			--keyFile "/data/$(KEYFILE)"
 
 stop:
 	docker stop $(NAME) --time 30 || true
@@ -43,9 +50,47 @@ stop:
 log:
 	docker logs --follow $(NAME)
 
-admin:
-	docker exec -it $(NAME) mongo --host localhost
+# Replica Set #
 
+rs_init=$(shell printf ' \
+  var cfg = { \
+    "_id": "$(RS_NAME)", \
+    "version": 1, \
+    "members": [ \
+      { "_id": 0, "host": "db0:27017", "priority": 2 }, \
+      { "_id": 1, "host": "db1:27017", "priority": 0 }, \
+      { "_id": 2, "host": "db2:27017", "priority": 0 } \
+    ] \
+  }; \
+  rs.initiate(cfg, { force: true }); \
+')
+
+rs-status:
+	docker exec $(NAME) \
+		mongo \
+			--host localhost \
+			--eval 'rs.status()'
+rs-init:
+	docker exec $(NAME) \
+		mongo \
+			--host localhost \
+			--eval '$(rs_init)'
+
+ADMIN_NAME=admin
+create_admin=$(shell printf ' \
+  use admin; \
+')
+
+admin:
+	@echo ""
+	@echo $(shell openssl rand -base64 32)
+	@echo $(shell openssl rand -base64 32)
+	@echo $(shell openssl rand -base64 32)
+	@echo ""
+	docker exec $(NAME) \
+		mongo \
+			--host localhost \
+			--eval '$(create_admin)'
 # helpers #
 
 keyexist:
@@ -53,6 +98,7 @@ keyexist:
 
 keyinexist:
 	! [ -f $(KEYFILE) ]
+
 #ping:
 #	@curl \
 #		--silent \
