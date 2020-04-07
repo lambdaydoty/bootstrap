@@ -84,11 +84,9 @@ rs-init:
 
 ## users ##
 
-ADMIN_NAME=admin
-DB_NAME=admin
 create_admin=$(shell printf ' \
   db.createUser({ \
-    user: "$(ADMIN_NAME)", \
+    user: "admin", \
     pwd: passwordPrompt(), \
     roles: ["root"] \
   }); \
@@ -99,9 +97,36 @@ admin:
 	@echo $(shell openssl rand -base64 32)
 	@echo ""
 	docker exec -it $(NAME) \
-		mongo $(DB_NAME) \
+		mongo admin \
 			--host $(RS_NAME)/db0,db1,db2 \
 			--eval '$(create_admin)'
+
+DB_NAME=
+USER_NAME=
+create_user=$(shell printf ' \
+  db.createUser({ \
+    user: "$(USER_NAME)", \
+    pwd: passwordPrompt(), \
+    roles: [ { role: "readWrite", db: "$(DB_NAME)" } ] \
+  }); \
+')
+
+user:
+	@echo ""
+	@echo $(shell openssl rand -base64 32)
+	@echo ""
+	docker exec -it $(NAME) \
+		mongo $(DB_NAME) \
+			--host $(RS_NAME)/db0,db1,db2 \
+			--username admin \
+			--eval '$(create_user)'
+
+shell:
+	docker exec -it $(NAME) \
+		mongo $(DB_NAME) \
+			--host $(RS_NAME)/db0,db1,db2 \
+			--username $(USER_NAME)
+
 ## helpers ##
 
 keyexist:
