@@ -6,8 +6,14 @@ IMAGE=mongo:4-bionic
 NAME=mongo
 PORT=27017
 
-DB_DIR=/var/lib/mongodb
+HOST_DIR="`pwd`/data/db"
+GUEST_DIR=/data/db
 RS_NAME=rs
+
+ID=999
+
+mkdir -p $HOST_DIR || true
+sudo chown $ID $HOST_DIR
 
 docker stop $NAME
 docker rm $NAME
@@ -17,7 +23,7 @@ docker run \
   --name $NAME \
   --publish 0.0.0.0:$PORT:$PORT \
   --volume "`pwd`/$KEYFILE:/data/$KEYFILE" \
-  --volume "$DB_DIR:/data/db" \
+  --volume "$HOST_DIR:$GUEST_DIR" \
   $IMAGE \
     --auth \
     --replSet $RS_NAME \

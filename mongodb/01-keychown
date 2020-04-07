@@ -1,8 +1,7 @@
 #!/bin/sh
 
 KEYFILE=keyfile
-
-uid=999
+ID=999
 
 chmod 400 $KEYFILE
-sudo chown $uid $KEYFILE
+sudo chown $ID $KEYFILE
