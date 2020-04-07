@@ -9,12 +9,16 @@ RS_NAME=rs
 KEYFILE=keyfile
 ID=999
 
+AUTH?=--auth
+KEY?=--keyFile /data/$(KEYFILE)
 IP0=
 IP1=
 IP2=
 
 test:
-	@echo '$(rs_init)'
+	@echo $(KEY)
+
+## keyfile ##
 
 keygen: keyinexist
 	@openssl rand -base64 755 > $(KEYFILE)
@@ -25,6 +29,8 @@ keychown: keyexist
 	@sudo chown $(ID) $(KEYFILE)
 	@sudo chgrp $(ID) $(KEYFILE)
 	@ls -al $(KEYFILE)
+
+## mongod ##
 
 run: stop keyexist
 	docker pull $(IMAGE)
@@ -40,9 +46,9 @@ run: stop keyexist
 		--add-host db1:$(IP1) \
 		--add-host db2:$(IP2) \
 		$(IMAGE) \
-			--auth \
 			--replSet $(RS_NAME) \
-			--keyFile "/data/$(KEYFILE)"
+			$(AUTH) \
+			$(KEY)
 
 stop:
 	docker stop $(NAME) --time 30 || true
@@ -50,7 +56,7 @@ stop:
 log:
 	docker logs --follow $(NAME)
 
-# Replica Set #
+## replica set ##
 
 rs_init=$(shell printf ' \
   var cfg = { \
@@ -76,22 +82,27 @@ rs-init:
 			--host localhost \
 			--eval '$(rs_init)'
 
+## users ##
+
 ADMIN_NAME=admin
+DB_NAME=admin
 create_admin=$(shell printf ' \
-  use admin; \
+  db.createUser({ \
+    user: "$(ADMIN_NAME)", \
+    pwd: passwordPrompt(), \
+    roles: ["root"] \
+  }); \
 ')
 
 admin:
 	@echo ""
 	@echo $(shell openssl rand -base64 32)
-	@echo $(shell openssl rand -base64 32)
-	@echo $(shell openssl rand -base64 32)
 	@echo ""
-	docker exec $(NAME) \
-		mongo \
-			--host localhost \
+	docker exec -it $(NAME) \
+		mongo $(DB_NAME) \
+			--host $(RS_NAME)/db0,db1,db2 \
 			--eval '$(create_admin)'
-# helpers #
+## helpers ##
 
 keyexist:
 	[ -f $(KEYFILE) ]
