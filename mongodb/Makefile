@@ -4,16 +4,18 @@ PORT=27017
 
 HOST_DATADIR="`pwd`/data/db"
 GUEST_DATADIR=/data/db
-RS_NAME=rs
+RS=rs
+RS_HOST=$(RS)/db0,db1,db2
 
 KEYFILE=keyfile
 ID=999
 
 AUTH?=--auth
 KEY?=--keyFile /data/$(KEYFILE)
-IP0=
-IP1=
-IP2=
+
+IP0?=ip0-here
+IP1?=ip1-here
+IP2?=ip2-here
 
 test:
 	@echo $(KEY)
@@ -46,7 +48,7 @@ run: stop keyexist
 		--add-host db1:$(IP1) \
 		--add-host db2:$(IP2) \
 		$(IMAGE) \
-			--replSet $(RS_NAME) \
+			--replSet $(RS) \
 			$(AUTH) \
 			$(KEY)
 
@@ -60,7 +62,7 @@ log:
 
 rs_init=$(shell printf ' \
   var cfg = { \
-    "_id": "$(RS_NAME)", \
+    "_id": "$(RS)", \
     "version": 1, \
     "members": [ \
       { "_id": 0, "host": "db0:27017", "priority": 2 }, \
@@ -95,37 +97,46 @@ create_admin=$(shell printf ' \
 admin:
 	@echo ""
 	@echo $(shell openssl rand -base64 32)
+	@echo $(shell openssl rand -base64 32)
+	@echo $(shell openssl rand -base64 32)
 	@echo ""
 	docker exec -it $(NAME) \
 		mongo admin \
-			--host $(RS_NAME)/db0,db1,db2 \
+			--host $(RS_HOST) \
 			--eval '$(create_admin)'
 
-DB_NAME=
-USER_NAME=
+DB?=db-name-here
+USER?=user-name-here
+
 create_user=$(shell printf ' \
   db.createUser({ \
-    user: "$(USER_NAME)", \
+    user: "$(USER)", \
     pwd: passwordPrompt(), \
-    roles: [ { role: "readWrite", db: "$(DB_NAME)" } ] \
+    roles: [ { role: "readWrite", db: "$(DB)" } ] \
   }); \
 ')
 
 user:
-	@echo ""
-	@echo $(shell openssl rand -base64 32)
+	@echo "Create a new user..."
+	@echo
+	@echo "dbname=$(DB)"
+	@echo "username=$(USER)"
+	@echo "password?= $(shell openssl rand -base64 32)"
+	@echo
+	@echo "First enter the admin password..."
 	@echo ""
 	docker exec -it $(NAME) \
-		mongo $(DB_NAME) \
-			--host $(RS_NAME)/db0,db1,db2 \
+		mongo $(DB) \
+			--authenticationDatabase admin \
+			--host $(RS_HOST) \
 			--username admin \
 			--eval '$(create_user)'
 
 shell:
 	docker exec -it $(NAME) \
-		mongo $(DB_NAME) \
-			--host $(RS_NAME)/db0,db1,db2 \
-			--username $(USER_NAME)
+		mongo $(DB) \
+			--host $(RS_HOST) \
+			--username $(USER)
 
 ## helpers ##
 
@@ -134,29 +145,3 @@ keyexist:
 
 keyinexist:
 	! [ -f $(KEYFILE) ]
-
-#ping:
-#	@curl \
-#		--silent \
-#		--header "Content-Type: application/json" \
-#		--data '{"method":"eth_blockNumber","params":[],"id":1,"jsonrpc":"2.0"}' \
-#		--request POST \
-#		$(URL) \
-#			| jq '.result' \
-#			| xargs printf "%d"
-#
-#head:
-#	$(eval TIMESTAMP := $(shell date +"%s"))
-#	@curl -s "https://api.etherscan.io/api?module=block&action=getblocknobytime&closest=before&timestamp=$(TIMESTAMP)" \
-#		| jq '.result' \
-#		| xargs
-#
-#enode:
-#	@curl \
-#		--silent \
-#		--header "Content-Type: application/json" \
-#		--data '{"method":"parity_enode","params":[],"id":1,"jsonrpc":"2.0"}' \
-#		--request POST \
-#		$(URL) \
-#			| jq '.result' \
-#			| xargs printf "%s"
