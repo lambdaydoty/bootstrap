@@ -38,3 +38,21 @@ make user DB=<db-name> USER=<user-name>
 make shell DB=admin USER=admin
 make shell DB=<db-name> USER=<user-name>
 ```
+
+### Dump/Restore
+
+```bash
+make dump IP0=x.x.x.x DB=<db-name> USER=<user-name>
+
+# .
+# |-README.md
+# ├─Makefile
+# ├─...
+# ├─dump-xxxxxxxxxx.tar
+# └─dump
+#    └───<db-name>
+#         └───*.json/*.bson
+
+make untar xxx.tar
+make restore IP0=x.x.x.x DB=<db-name> USER=<user-name>
+```
