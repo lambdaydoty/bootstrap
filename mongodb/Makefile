@@ -72,6 +72,8 @@ rs_init=$(shell printf ' \
   }; \
   rs.initiate(cfg, { force: true }); \
 ')
+# rs.reconfig(cfg, { force: true });
+# db.getMongo().setReadPref('nearest');
 
 rs-status:
 	docker exec $(NAME) \
@@ -137,6 +139,8 @@ shell:
 		mongo $(DB) \
 			--host $(RS_HOST) \
 			--username $(USER)
+
+# /bin/bash -c "mkdir /home/mongodb && touch /home/mongodb/.dbshell && mongo --username $admin_name --host $RS_NAME/db0,db1,db2 --password"
 
 ## helpers ##
 
