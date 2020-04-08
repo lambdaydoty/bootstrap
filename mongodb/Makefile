@@ -132,8 +132,12 @@ user:
 			--eval '$(create_user)'
 
 shell:
-	docker exec -it $(NAME) \
-		mongo $(DB) \
+	docker run \
+		-it \
+		--add-host db0:$(IP0) \
+		--add-host db1:$(IP1) \
+		--add-host db2:$(IP2) \
+		$(IMAGE) mongo $(DB) \
 			--host $(RS_HOST) \
 			--username $(USER)
 
