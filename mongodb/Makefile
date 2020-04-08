@@ -17,9 +17,6 @@ IP0?=ip0-here
 IP1?=ip1-here
 IP2?=ip2-here
 
-test:
-	@echo $(KEY)
-
 ## keyfile ##
 
 keygen: keyinexist
@@ -141,6 +138,50 @@ shell:
 			--username $(USER)
 
 # /bin/bash -c "mkdir /home/mongodb && touch /home/mongodb/.dbshell && mongo --username $admin_name --host $RS_NAME/db0,db1,db2 --password"
+
+## dump/restore ##
+
+DUMP_PATH?=$(shell pwd)/dump
+
+untar:
+	@echo "Parameters: FILE=..."
+	@tar xvf $(FILE)
+
+restore:
+	@echo "Parameters: IP0=... DB=... USER=..."
+	@echo ""
+	@echo "Make sure the dump dir has tree structure as:"
+	@echo ".../dump/<db-name>/*.{json,bson}"
+	@echo ""
+	docker run \
+		-it \
+		--rm \
+		--volume $(DUMP_PATH):/dump \
+		--add-host db0:$(IP0) \
+		$(IMAGE) mongorestore /dump/$(DB) \
+			--host $(IP0) \
+			--port $(PORT) \
+			--db $(DB) \
+			--username $(USER)
+
+dump:
+	@echo "Parameters: IP0=... DB=... USER=..."
+	@echo ""
+	mkdir $(DUMP_PATH) || true
+	sudo chown $(ID) $(DUMP_PATH)
+	docker run \
+		-it \
+		--rm \
+		--volume $(DUMP_PATH):/dump \
+		--add-host db0:$(IP0) \
+		$(IMAGE) mongodump \
+			--out /dump \
+			--host $(IP0) \
+			--port $(PORT) \
+			--db $(DB) \
+			--username $(USER)
+	@ls -al $(DUMP_PATH)
+	@tar cvf dump-$(shell date +'%s').tar $(DUMP_PATH)
 
 ## helpers ##
 
