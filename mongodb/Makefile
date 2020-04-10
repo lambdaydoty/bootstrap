@@ -187,6 +187,34 @@ dump:
 	@ls -al $(DUMP_PATH)
 	@tar cvf dump-$(shell date +'%s').tar $(DUMP_PATH)
 
+## triplet ##
+
+TR_RS=triplet
+TR_HOST=localhost
+TR_PORT0=37017
+TR_PORT1=37018
+TR_PORT2=37019
+tr_init=$(shell printf ' \
+  var cfg = { \
+    "_id": "$(TR_RS)", \
+    "version": 1, \
+    "members": [ \
+      { "_id": 0, "host": "$(TR_HOST):$(TR_PORT0)" }, \
+      { "_id": 1, "host": "$(TR_HOST):$(TR_PORT1)" }, \
+      { "_id": 2, "host": "$(TR_HOST):$(TR_PORT2)" } \
+    ] \
+  }; \
+  rs.initiate(cfg, { force: true }); \
+')
+
+triplet:
+	docker run --detach --net=host --name triplet0 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
+	docker run --detach --net=host --name triplet1 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
+	docker run --detach --net=host --name triplet2 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
+	sleep 3
+	docker run -it $(IMAGE) mongo --host $(TR_HOST) --port $(TR_PORT0) --eval '$(tr_init)'
+	docker run -it $(IMAGE) mongo --host $(TR_HOST) --port $(TR_PORT0) --eval 'rs.status()'
+
 ## helpers ##
 
 keyexist:
