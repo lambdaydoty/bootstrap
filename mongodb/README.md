@@ -36,7 +36,8 @@ make user DB=<db-name> USER=<user-name>
 
 # login shell
 make shell DB=admin USER=admin
-make shell DB=<db-name> USER=<user-name>
+make shell IP0=... IP1=... IP2= ... DB=<db-name> USER=<user-name>
+make shell NETWORK=host PORT0=... PORT1=... PORT2= ... DB=<db-name>
 ```
 
 ### Dump/Restore

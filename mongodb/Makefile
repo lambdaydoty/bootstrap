@@ -1,6 +1,6 @@
-IMAGE=mongo:4-bionic
+IMAGE=mongo:4
 NAME=mongo
-PORT=27017
+PORT?=27017
 
 HOST_DATADIR="`pwd`/data/db"
 GUEST_DATADIR=/data/db
@@ -13,9 +13,9 @@ ID=999
 AUTH?=--auth
 KEY?=--keyFile /data/$(KEYFILE)
 
-IP0?=ip0-here
-IP1?=ip1-here
-IP2?=ip2-here
+IP0?=127.0.0.1
+IP1?=127.0.0.1
+IP2?=127.0.0.1
 
 ## keyfile ##
 
@@ -104,8 +104,8 @@ admin:
 			--host $(RS_HOST) \
 			--eval '$(create_admin)'
 
-DB?=db-name-here
-USER?=user-name-here
+DB?=<db-name-here>
+USER?=<user-name-here>
 
 create_user=$(shell printf ' \
   db.createUser({ \
@@ -131,17 +131,27 @@ user:
 			--username admin \
 			--eval '$(create_user)'
 
+PORT0?=$(PORT)
+PORT1?=$(PORT)
+PORT2?=$(PORT)
+URI?=mongodb://$(USER)@db0:$(PORT0),db1:$(PORT1),db2:$(PORT2)/$(DB)?replicaSet=$(RS)
+NETWORK?=bridge
+
 shell:
+	@echo "Parameters: IPx?=... PORTx?=... DB= USER="
+	@echo ""
+	@echo $(URI)
+	@echo ""
+	docker stop $(DB)-$(USER) || true
+	docker rm $(DB)-$(USER) || true
 	docker run \
 		-it \
+		--network $(NETWORK) \
 		--add-host db0:$(IP0) \
 		--add-host db1:$(IP1) \
 		--add-host db2:$(IP2) \
-		$(IMAGE) mongo $(DB) \
-			--host $(RS_HOST) \
-			--username $(USER)
-
-# /bin/bash -c "mkdir /home/mongodb && touch /home/mongodb/.dbshell && mongo --username $admin_name --host $RS_NAME/db0,db1,db2 --password"
+		--name shell-$(DB) \
+		$(IMAGE) mongo "$(URI)"
 
 ## dump/restore ##
 
@@ -207,13 +217,24 @@ tr_init=$(shell printf ' \
   rs.initiate(cfg, { force: true }); \
 ')
 
-triplet:
-	docker run --detach --net=host --name triplet0 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
-	docker run --detach --net=host --name triplet1 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
-	docker run --detach --net=host --name triplet2 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
+TR_URI=mongodb://$(TR_HOST):$(TR_PORT0),$(TR_HOST):$(TR_PORT1),$(TR_HOST):$(TR_PORT2)/$(DB)?replicaSet=$(TR_RS)
+
+triplet: stop-triplet
+	docker run --detach --network host --name triplet0 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT0) --bind_ip_all
+	docker run --detach --network host --name triplet1 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT1) --bind_ip_all
+	docker run --detach --network host --name triplet2 $(IMAGE) --replSet $(TR_RS) --port $(TR_PORT2) --bind_ip_all
 	sleep 3
-	docker run -it $(IMAGE) mongo --host $(TR_HOST) --port $(TR_PORT0) --eval '$(tr_init)'
-	docker run -it $(IMAGE) mongo --host $(TR_HOST) --port $(TR_PORT0) --eval 'rs.status()'
+	docker exec -it triplet0 mongo --host $(TR_HOST) --port $(TR_PORT0) --eval '$(tr_init)'
+	docker exec -it triplet0 mongo --host $(TR_HOST) --port $(TR_PORT0) --eval 'rs.status()'
+	@echo "DB_URI=$(TR_URI)"
+
+stop-triplet:
+	docker stop triplet0 || true
+	docker stop triplet1 || true
+	docker stop triplet2 || true
+	docker rm triplet0 || true
+	docker rm triplet1 || true
+	docker rm triplet2 || true
 
 ## helpers ##
 
