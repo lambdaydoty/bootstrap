@@ -1,0 +1,19 @@
+#!/bin/sh
+echo notify-login
+[ "$PAM_TYPE" = "open_session" ] || exit 0
+
+container=$1
+
+{
+  echo ""
+  echo "        user: $PAM_USER@`hostname`"
+  echo "        ruser: $PAM_RUSER"
+  echo "        rhost: $PAM_RHOST"
+  echo "        service: $PAM_SERVICE"
+  echo "        tty: $PAM_TTY"
+  echo "        date: `date`"
+  echo "        server: `uname -a`"
+} | docker exec -i $container bash -c 'node /app/build/gchat.js'
+
+# ref:
+# https://blog.stalkr.net/2010/11/login-notifications-pamexec-scripting.html
